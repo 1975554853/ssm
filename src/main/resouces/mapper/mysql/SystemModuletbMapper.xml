@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.beiyou.mapper.SystemModuletbMapper">
+  <resultMap id="BaseResultMap" type="com.beiyou.pojo.SystemModuletb">
+    <id column="moduleId" jdbcType="INTEGER" property="moduleid" />
+    <result column="parentId" jdbcType="INTEGER" property="parentid" />
+    <result column="moduleName" jdbcType="VARCHAR" property="modulename" />
+    <result column="moduleWeight" jdbcType="INTEGER" property="moduleweight" />
+    <result column="moduleUrl" jdbcType="VARCHAR" property="moduleurl" />
+    <result column="moduleCreateTime" jdbcType="TIMESTAMP" property="modulecreatetime" />
+    <result column="moduleLastUpdateTime" jdbcType="TIMESTAMP" property="modulelastupdatetime" />
+  </resultMap>
+  <sql id="Base_Column_List">
+    moduleId, parentId, moduleName, moduleWeight, moduleUrl, moduleCreateTime, moduleLastUpdateTime
+  </sql>
+  <select id="selectByPrimaryKey" parameterType="java.lang.Integer" resultMap="BaseResultMap">
+    select 
+    <include refid="Base_Column_List" />
+    from moduletb
+    where moduleId = #{moduleid,jdbcType=INTEGER}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
+    delete from moduletb
+    where moduleId = #{moduleid,jdbcType=INTEGER}
+  </delete>
+  <insert id="insert" parameterType="com.beiyou.pojo.SystemModuletb">
+    insert into moduletb (moduleId, parentId, moduleName, 
+      moduleWeight, moduleUrl, moduleCreateTime, 
+      moduleLastUpdateTime)
+    values (#{moduleid,jdbcType=INTEGER}, #{parentid,jdbcType=INTEGER}, #{modulename,jdbcType=VARCHAR}, 
+      #{moduleweight,jdbcType=INTEGER}, #{moduleurl,jdbcType=VARCHAR}, #{modulecreatetime,jdbcType=TIMESTAMP}, 
+      #{modulelastupdatetime,jdbcType=TIMESTAMP})
+  </insert>
+  <insert id="insertSelective" parameterType="com.beiyou.pojo.SystemModuletb">
+    insert into moduletb
+    <trim prefix="(" suffix=")" suffixOverrides=",">
+      <if test="moduleid != null">
+        moduleId,
+      </if>
+      <if test="parentid != null">
+        parentId,
+      </if>
+      <if test="modulename != null">
+        moduleName,
+      </if>
+      <if test="moduleweight != null">
+        moduleWeight,
+      </if>
+      <if test="moduleurl != null">
+        moduleUrl,
+      </if>
+      <if test="modulecreatetime != null">
+        moduleCreateTime,
+      </if>
+      <if test="modulelastupdatetime != null">
+        moduleLastUpdateTime,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides=",">
+      <if test="moduleid != null">
+        #{moduleid,jdbcType=INTEGER},
+      </if>
+      <if test="parentid != null">
+        #{parentid,jdbcType=INTEGER},
+      </if>
+      <if test="modulename != null">
+        #{modulename,jdbcType=VARCHAR},
+      </if>
+      <if test="moduleweight != null">
+        #{moduleweight,jdbcType=INTEGER},
+      </if>
+      <if test="moduleurl != null">
+        #{moduleurl,jdbcType=VARCHAR},
+      </if>
+      <if test="modulecreatetime != null">
+        #{modulecreatetime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="modulelastupdatetime != null">
+        #{modulelastupdatetime,jdbcType=TIMESTAMP},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.beiyou.pojo.SystemModuletb">
+    update moduletb
+    <set>
+      <if test="parentid != null">
+        parentId = #{parentid,jdbcType=INTEGER},
+      </if>
+      <if test="modulename != null">
+        moduleName = #{modulename,jdbcType=VARCHAR},
+      </if>
+      <if test="moduleweight != null">
+        moduleWeight = #{moduleweight,jdbcType=INTEGER},
+      </if>
+      <if test="moduleurl != null">
+        moduleUrl = #{moduleurl,jdbcType=VARCHAR},
+      </if>
+      <if test="modulecreatetime != null">
+        moduleCreateTime = #{modulecreatetime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="modulelastupdatetime != null">
+        moduleLastUpdateTime = #{modulelastupdatetime,jdbcType=TIMESTAMP},
+      </if>
+    </set>
+    where moduleId = #{moduleid,jdbcType=INTEGER}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.beiyou.pojo.SystemModuletb">
+    update moduletb
+    set parentId = #{parentid,jdbcType=INTEGER},
+      moduleName = #{modulename,jdbcType=VARCHAR},
+      moduleWeight = #{moduleweight,jdbcType=INTEGER},
+      moduleUrl = #{moduleurl,jdbcType=VARCHAR},
+      moduleCreateTime = #{modulecreatetime,jdbcType=TIMESTAMP},
+      moduleLastUpdateTime = #{modulelastupdatetime,jdbcType=TIMESTAMP}
+    where moduleId = #{moduleid,jdbcType=INTEGER}
+  </update>
+  <select id="selectModleId" parameterType="list" resultType="java.lang.Integer">
+    select moduleId from rolemoduletb where roleId in
+    <foreach collection="list" item="item" open="(" separator="," close=")">
+      #{item}
+    </foreach>
+  </select>
+  <select id="queryModleById" resultMap="BaseResultMap">
+    select * from moduletb where parentId = #{father} and moduleId in
+    <foreach collection="modles" separator="," item="id" open="(" close=")" >
+      #{id}
+    </foreach>
+
+  </select>
+  <select id="queryChilrenByFather" resultMap="BaseResultMap">
+    select * from moduletb where parentId = #{moduleid}
+  </select>
+  <select id="query" resultMap="BaseResultMap" parameterType="list">
+    select * from moduletb where  moduleId in
+    <foreach collection="list" separator="," item="id" open="(" close=")" >
+      #{id}
+    </foreach>
+  </select>
+</mapper>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

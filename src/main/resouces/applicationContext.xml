@@ -1,0 +1,211 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:aop="http://www.springframework.org/schema/aop" xmlns:tx="http://www.springframework.org/schema/tx"
+       xmlns:mvc="http://www.springframework.org/schema/mvc" xmlns:rabbit="http://www.springframework.org/schema/rabbit"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+       http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://www.springframework.org/schema/context
+       http://www.springframework.org/schema/context/spring-context.xsd
+       http://www.springframework.org/schema/aop
+       http://www.springframework.org/schema/aop/spring-aop.xsd
+       http://www.springframework.org/schema/tx
+       http://www.springframework.org/schema/tx/spring-tx.xsd
+       http://www.springframework.org/schema/mvc
+       http://www.springframework.org/schema/mvc/spring-mvc.xsd http://www.springframework.org/schema/rabbit http://www.springframework.org/schema/rabbit/spring-rabbit.xsd">
+
+    <mvc:annotation-driven />
+    <!--扫描切面注解带aspect-->
+    <aop:aspectj-autoproxy proxy-target-class="true"/>
+    <!--扫描所有的bean-->
+    <context:component-scan base-package="com.beiyou.*"/>
+
+
+    <context:property-placeholder location="classpath:jdbc.properties " ignore-unresolvable="true"/>
+    <!-- redis 配置 -->
+    <context:property-placeholder location="classpath:redis.properties" ignore-unresolvable="true" />
+    <bean id="poolConfig" class="redis.clients.jedis.JedisPoolConfig">
+        <property name="maxIdle" value="${redis.maxIdle1}" />
+        <property name="minIdle" value="${redis.minIdle}" />
+        <property name="maxWaitMillis" value="${redis.maxWait}" />
+        <property name="testOnBorrow" value="${redis.testOnBorrow}" />
+    </bean>
+    <!-- redis服务器中心 -->
+    <bean id="connectionFactory"
+          class="org.springframework.data.redis.connection.jedis.JedisConnectionFactory">
+        <property name="poolConfig" ref="poolConfig" />
+        <property name="port" value="${redis.port}" />
+        <property name="hostName" value="${redis.host}" />
+        <property name="password" value="${redis.pass}" />
+        <property name="timeout" value="${redis.timeout}" />
+    </bean>
+    <!--注入到自定义缓存-->
+    <bean id="redisCacheTransfer" class="com.beiyou.util.cache.RedisCacheTransfer">
+        <property name="jedisConnectionFactory" ref="connectionFactory"/>
+    </bean>
+
+    <!-- redis操作模板，面向对象的模板 -->
+    <bean id="redisTemplate" class="org.springframework.data.redis.core.StringRedisTemplate">
+        <property name="connectionFactory" ref="connectionFactory" />
+        <!-- 如果不配置Serializer，那么存储的时候只能使用String，如果用对象类型存储，那么会提示错误 -->
+        <property name="keySerializer">
+            <bean class="org.springframework.data.redis.serializer.StringRedisSerializer" />
+        </property>
+        <property name="valueSerializer">
+            <bean class="org.springframework.data.redis.serializer.JdkSerializationRedisSerializer" />
+        </property>
+    </bean>
+
+
+
+
+
+    <!--配置mysql的数据源-->
+    <bean id="comboPooledDataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource">
+        <property name="driverClass" value="${jdbc.mysql.driver}"/>
+        <property name="jdbcUrl" value="${jdbc.mysql.url}"/>
+        <property name="user" value="${jdbc.mysql.username}"/>
+        <property name="password" value="${jdbc.mysql.password}"/>
+        <property name="minPoolSize" value="${jdbc.mysql.minPoolSize}"/>
+        <property name="maxPoolSize" value="${jdbc.mysql.maxPoolSize}"/>
+    </bean>
+    <!--配置oracle数据源-->
+    <bean id="oracleDataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource" destroy-method="close">
+        <property name="driverClass" value="${jdbc.oracle.driverClass}"/>
+        <property name="jdbcUrl" value="${jdbc.oracle.jdbcUrl}"/>
+        <property name="user" value="${jdbc.oracle.user_name}"/>
+        <property name="password" value="${jdbc.oracle.password}"/>
+    </bean>
+    <!--数据源统一管理,并且为每一个数据源命名-->
+    <bean id="dateSourceUtils" class="com.beiyou.util.data.DateSourceUtils">
+        <property name="defaultTargetDataSource" ref="comboPooledDataSource"/>
+        <property name="targetDataSources">
+            <map>
+                <entry key="mysql" value-ref="comboPooledDataSource"/>
+                <entry key="oracle" value-ref="oracleDataSource"/>
+            </map>
+        </property>
+    </bean>
+
+
+    <bean class="org.mybatis.spring.SqlSessionFactoryBean" id="sqlSessionFactory">
+        <property name="dataSource" ref="dateSourceUtils"/>
+        <property name="configLocation" value="classpath:mybatis-config.xml"/>
+        <property name="mapperLocations">
+            <list>
+                <value>classpath:mapper/mysql/*.xml</value>
+                <value>classpath:mapper/oracle/*.xml</value>
+            </list>
+        </property>
+    </bean>
+
+    <!--mapper接口-->
+    <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+        <property name="basePackage" value="com.beiyou.mapper"/>
+    </bean>
+
+
+    <!--rabbitMq配置-->
+    <rabbit:connection-factory id="rabbitMqConnectionFactory"
+                               host="${rabbitMq.url}"
+                               username="${rabbitMq.username}"
+                               password="${rabbitMq.password}"
+                               port="${rabbitMq.port}"
+    ></rabbit:connection-factory>
+    <rabbit:admin connection-factory="rabbitMqConnectionFactory"/>
+    <!--声明mq模板,定义消息生产者-->
+    <rabbit:template id="amqpTemplate"
+                     exchange="mq_exchange"
+                     connection-factory="rabbitMqConnectionFactory"
+                     message-converter="jsonMessageConverter"
+    />
+    <bean id="jsonMessageConverter" class="com.beiyou.business.rabbit.GsonJsonMessageConverter"/>
+    <!--声明队列-->
+    <rabbit:queue name="message_queue" durable="true" auto-delete="false" exclusive="false"/>
+    <!--注册交换机-->
+    <rabbit:topic-exchange name="mq_exchange" durable="true" auto-delete="false">
+        <rabbit:bindings>
+            <rabbit:binding queue="message_queue" pattern="mq_url"></rabbit:binding>
+        </rabbit:bindings>
+    </rabbit:topic-exchange>
+    <!--配置消费者-->
+    <bean id="messageCustomer" class="com.beiyou.business.rabbit.Customer"/>
+    <!--配置监听 监听队列中是否有新的消息-->
+    <rabbit:listener-container connection-factory="rabbitMqConnectionFactory" acknowledge="auto">
+        <rabbit:listener ref="messageCustomer" queues="message_queue" method="onMessage"/>
+    </rabbit:listener-container>
+    <!--开启文件上传-->
+
+    <bean id="multipartResolver" class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
+        <property name="maxUploadSize" value="102400000000"/>
+        <property name="maxInMemorySize" value="40960"/>
+        <property name="defaultEncoding" value="UTF-8"/>
+    </bean>
+
+<!--事务-->
+    <bean id="MYSQLtransactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <property name="dataSource" ref="comboPooledDataSource"/>
+    </bean>
+    <aop:config>
+<!--&lt;!&ndash;//切入点&ndash;&gt;-->
+        <aop:pointcut id="MYSQLstuService" expression="execution(* com.beiyou.business.MYSQL..*(..))"/>
+        <aop:advisor advice-ref="MYSQLtxAdvice" pointcut-ref="MYSQLstuService" order="30"/>
+       <!--&lt;!&ndash;切入方式&ndash;&gt;-->
+    </aop:config>
+    <tx:advice id="MYSQLtxAdvice" transaction-manager="MYSQLtransactionManager">
+    <tx:attributes>
+    <tx:method name="*"/>
+    <tx:method name="select*" read-only="true"/>
+    <tx:method name="delete*" read-only="false" propagation="REQUIRED"/>
+    <tx:method name="insert*" read-only="false" propagation="REQUIRED"/>
+    <tx:method name="update*" read-only="false" propagation="REQUIRED"/>
+    </tx:attributes>
+    </tx:advice>
+<!--事务结束-->
+    <!--事务-->
+    <bean id="ORACLEtransactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <property name="dataSource" ref="oracleDataSource"/>
+    </bean>
+    <aop:config>
+        <!--&lt;!&ndash;//切入点&ndash;&gt;-->
+        <aop:pointcut id="ORACLEstuService" expression="execution(* com.beiyou.business.oracle..*(..))"/>
+        <aop:advisor advice-ref="ORACLEtxAdvice" pointcut-ref="ORACLEstuService" order="30"/>
+        <!--&lt;!&ndash;切入方式&ndash;&gt;-->
+    </aop:config>
+    <tx:advice id="ORACLEtxAdvice" transaction-manager="ORACLEtransactionManager">
+        <tx:attributes>
+            <tx:method name="*"/>
+            <tx:method name="select*" read-only="true"/>
+            <tx:method name="delete*" read-only="false" propagation="REQUIRED"/>
+            <tx:method name="insert*" read-only="false" propagation="REQUIRED"/>
+            <tx:method name="update*" read-only="false" propagation="REQUIRED"/>
+        </tx:attributes>
+    </tx:advice>
+    <!--事务结束-->
+    <!--&lt;!&ndash;全局异常处理&ndash;&gt;-->
+    <!--<bean class="org.springframework.web.servlet.handler.SimpleMappingExceptionResolver">-->
+        <!--<property name="exceptionMappings">-->
+            <!--<props>-->
+                <!--&lt;!&ndash;<prop key="java.lang.Exception"></prop>&ndash;&gt;-->
+                <!--<prop key="com.beiyou.auth.Exception.NoPermissionException">redirect:http://localhost:63343/quanxianguanli/index/error.html</prop>-->
+                <!--<prop key="com.beiyou.auth.Exception.NOLoginException">redirect:http://localhost:63343/quanxianguanli/index/404.html</prop>-->
+            <!--</props>-->
+        <!--</property>-->
+    <!--</bean>-->
+    <!--发送邮件-->
+    <bean class="org.springframework.mail.javamail.JavaMailSenderImpl">
+        <property name="host" value="smtp.163.com"/>
+        <property name="protocol" value="smtp"/>
+        <!--<property name="port" value="465"/>-->
+        <property name="username" value="13674966707@163.com"/>
+        <property name="password" value="a1234567890"/>
+        <property name="defaultEncoding" value="UTF-8"/>
+        <property name="javaMailProperties">
+            <props>
+                <prop key="mail.smtp.auth">true</prop>
+                <prop key="mail.smtp.timeout">25000</prop>
+            </props>
+        </property>
+    </bean>
+</beans>

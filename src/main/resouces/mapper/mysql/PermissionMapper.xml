@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.beiyou.mapper.PermissionMapper">
+    <select id="queryAll" resultType="java.lang.String">
+          SELECT permissionValue FROM permissiontb
+    </select>
+
+    <insert id="batchInsert" parameterType="list">
+
+        INSERT INTO permissiontb VALUES
+        <foreach collection="list" item="permissiontb" separator=",">
+            (null,#{permissiontb.permissionValue},#{permissiontb.permissionModule},#{permissiontb.permissionName},now())
+        </foreach>
+
+    </insert>
+    <select id="queryPermissionById" resultType="java.lang.String">
+      select permissionValue from permissiontb where
+      permissionId in (
+      select permissionId from rolepermissiontb where roleId
+      in (select roleId from userroletb where userId = #{userid}))
+  </select>
+</mapper>

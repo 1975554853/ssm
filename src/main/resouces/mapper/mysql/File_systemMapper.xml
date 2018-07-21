@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.beiyou.mapper.File_systemMapper">
+  <resultMap id="BaseResultMap" type="com.beiyou.pojo.File_system">
+    <id column="idfile_System" jdbcType="INTEGER" property="idfileSystem" />
+    <result column="file_System_oldName" jdbcType="VARCHAR" property="fileSystemOldname" />
+    <result column="file_System_newName" jdbcType="VARCHAR" property="fileSystemNewname" />
+    <result column="file_System_type" jdbcType="VARCHAR" property="fileSystemType" />
+    <result column="file_System_uploadDate" jdbcType="VARCHAR" property="fileSystemUploaddate" />
+    <result column="file_System_path" jdbcType="VARCHAR" property="fileSystemPath" />
+  </resultMap>
+  <sql id="Base_Column_List">
+    idfile_System, file_System_oldName, file_System_newName, file_System_type, file_System_uploadDate, 
+    file_System_path
+  </sql>
+  <select id="selectByPrimaryKey" parameterType="java.lang.Integer" resultMap="BaseResultMap">
+    select 
+    <include refid="Base_Column_List" />
+    from file_system
+    where idfile_System = #{idfileSystem,jdbcType=INTEGER}
+  </select>
+  <select id="selectByPage" resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List" />
+    from file_system
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
+    delete from file_system
+    where idfile_System = #{idfileSystem,jdbcType=INTEGER}
+  </delete>
+  <insert id="insert" parameterType="com.beiyou.pojo.File_system">
+    insert into file_system (idfile_System, file_System_oldName, 
+      file_System_newName, file_System_type, file_System_uploadDate, 
+      file_System_path)
+    values (#{idfileSystem,jdbcType=INTEGER}, #{fileSystemOldname,jdbcType=VARCHAR}, 
+      #{fileSystemNewname,jdbcType=VARCHAR}, #{fileSystemType,jdbcType=VARCHAR}, #{fileSystemUploaddate,jdbcType=VARCHAR}, 
+      #{fileSystemPath,jdbcType=VARCHAR})
+  </insert>
+  <insert id="insertSelective" parameterType="com.beiyou.pojo.File_system">
+    insert into file_system
+    <trim prefix="(" suffix=")" suffixOverrides=",">
+      <if test="idfileSystem != null">
+        idfile_System,
+      </if>
+      <if test="fileSystemOldname != null">
+        file_System_oldName,
+      </if>
+      <if test="fileSystemNewname != null">
+        file_System_newName,
+      </if>
+      <if test="fileSystemType != null">
+        file_System_type,
+      </if>
+      <if test="fileSystemUploaddate != null">
+        file_System_uploadDate,
+      </if>
+      <if test="fileSystemPath != null">
+        file_System_path,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides=",">
+      <if test="idfileSystem != null">
+        #{idfileSystem,jdbcType=INTEGER},
+      </if>
+      <if test="fileSystemOldname != null">
+        #{fileSystemOldname,jdbcType=VARCHAR},
+      </if>
+      <if test="fileSystemNewname != null">
+        #{fileSystemNewname,jdbcType=VARCHAR},
+      </if>
+      <if test="fileSystemType != null">
+        #{fileSystemType,jdbcType=VARCHAR},
+      </if>
+      <if test="fileSystemUploaddate != null">
+        #{fileSystemUploaddate,jdbcType=VARCHAR},
+      </if>
+      <if test="fileSystemPath != null">
+        #{fileSystemPath,jdbcType=VARCHAR},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.beiyou.pojo.File_system">
+    update file_system
+    <set>
+      <if test="fileSystemOldname != null">
+        file_System_oldName = #{fileSystemOldname,jdbcType=VARCHAR},
+      </if>
+      <if test="fileSystemNewname != null">
+        file_System_newName = #{fileSystemNewname,jdbcType=VARCHAR},
+      </if>
+      <if test="fileSystemType != null">
+        file_System_type = #{fileSystemType,jdbcType=VARCHAR},
+      </if>
+      <if test="fileSystemUploaddate != null">
+        file_System_uploadDate = #{fileSystemUploaddate,jdbcType=VARCHAR},
+      </if>
+      <if test="fileSystemPath != null">
+        file_System_path = #{fileSystemPath,jdbcType=VARCHAR},
+      </if>
+    </set>
+    where idfile_System = #{idfileSystem,jdbcType=INTEGER}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.beiyou.pojo.File_system">
+    update file_system
+    set file_System_oldName = #{fileSystemOldname,jdbcType=VARCHAR},
+      file_System_newName = #{fileSystemNewname,jdbcType=VARCHAR},
+      file_System_type = #{fileSystemType,jdbcType=VARCHAR},
+      file_System_uploadDate = #{fileSystemUploaddate,jdbcType=VARCHAR},
+      file_System_path = #{fileSystemPath,jdbcType=VARCHAR}
+    where idfile_System = #{idfileSystem,jdbcType=INTEGER}
+  </update>
+</mapper>
